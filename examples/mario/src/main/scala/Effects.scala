@@ -1,6 +1,6 @@
 package mario
 
-import mario.Main._
+import mario.Mario._
 import org.scalajs.dom
 import org.scalajs.dom.{KeyboardEvent, document, window}
 import org.scalajs.dom.raw.{Event, HTMLAudioElement, TouchEvent}
