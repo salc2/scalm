@@ -113,7 +113,7 @@ object Debugger extends App {
   def main(args: Array[String]): Unit =
     Scalm.start(this, document.querySelector("#container"))
 
-  case class Model(paused: Boolean, states: Array[(Mario.Msg, Mario.Model)], currentFrame: Int)
+  case class Model(paused: Boolean, states: Array[(Mario.Msg, Mario.Model)], indexState: Int)
 
   sealed trait Msg
   case class Wrapper(msg: Mario.Msg) extends Msg
@@ -129,13 +129,16 @@ object Debugger extends App {
   override def view(model: Model): Html[Msg] = {
 
     val (action, ms, ico, index) = model match {
-      case Model(true, ms, f)  => (Play, ms, ">", f)
-      case Model(false, ms, _) => (Pause, ms, "||", ms.length)
+      case Model(true, m, f)  => (Play, m, ">", f)
+      case Model(false, m, _) => (Pause, m, "||", m.length)
     }
 
-    println(ms(if(index-1 > 0 ) index-1 else 0)._2)
+    val indx = if(index-1 > 0 ) index-1 else 0
+    val _model = ms(indx)._2
+    val _msg = ms(indx)._1
+
     div()(
-      Mario.view(ms(if(index-1 > 0 ) index-1 else 0)._2).map(Wrapper),
+      Mario.view(_model).map(Wrapper),
       button(onClick(action))(text(ico)),
       input(
         attr("type", "range"),
@@ -154,15 +157,16 @@ object Debugger extends App {
 
   override def update(msg: Msg, model: Model): (Model, Cmd[Msg]) = {
     msg match {
-      case Play  => ( model.copy(paused = false, currentFrame = model.states.length), Cmd.Empty)
-      case Pause => ( model.copy(paused = true, currentFrame = model.states.length), Cmd.Empty)
+      case Play  => ( model.copy(paused = false, indexState = model.states.length), Cmd.Empty)
+      case Pause => ( model.copy(paused = true, indexState = model.states.length), Cmd.Empty)
       case Wrapper(m) =>
+        println(m)
         val (nw, c) = Mario.update(m, model.states.last._2)
         ( model.copy(states = model.states :+ (m,nw)), c.map(Wrapper))
       case Lookup(index) =>
         val (_msg, _model) = model.states(if(index-1 > 0 ) index-1 else 0)
-        val (nm, cmd) = Mario.update(_msg, _model)
-        (model.copy(currentFrame = index), cmd.map(Wrapper))
+        val (_, cmd) = Mario.update(_msg, _model)
+        (model.copy(indexState = index), cmd.map(Wrapper))
     }
   }
 
