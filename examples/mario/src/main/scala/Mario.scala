@@ -113,7 +113,9 @@ object Debugger extends App {
   def main(args: Array[String]): Unit =
     Scalm.start(this, document.querySelector("#container"))
 
-  case class Model(paused: Boolean, states: Array[(Mario.Msg, Mario.Model)], indexState: Int)
+  case class Model(paused: Boolean,
+                   states: Array[(Mario.Msg, Mario.Model)],
+                   indexState: Int)
 
   sealed trait Msg
   case class Wrapper(msg: Mario.Msg) extends Msg
@@ -123,7 +125,8 @@ object Debugger extends App {
 
   override def init: (Model, Cmd[Msg]) = {
     val (model, cmd) = Mario.init
-    (Model(paused = false, Array((Mario.PassageOfTime, model)), 0), cmd.map(Wrapper))
+    (Model(paused = false, Array((Mario.PassageOfTime, model)), 0),
+     cmd.map(Wrapper))
   }
 
   override def view(model: Model): Html[Msg] = {
@@ -133,12 +136,15 @@ object Debugger extends App {
       case Model(false, m, _) => (Pause, m, "||", m.length)
     }
 
-    val indx = if(index-1 > 0 ) index-1 else 0
+    val indx = if (index - 1 > 0) index - 1 else 0
     val _model = ms(indx)._2
     val _msg = ms(indx)._1
 
     div()(
       Mario.view(_model).map(Wrapper),
+      div(style(Style("float", " right"), Style("font-family", "Arial")))(
+        div()(text(_msg.toString)),
+        div()(text(_model.toString))),
       button(onClick(action))(text(ico)),
       input(
         attr("type", "range"),
@@ -148,7 +154,7 @@ object Debugger extends App {
         attr("step", "1"),
         onEvent(
           "input",
-          (ev:dom.raw.Event) =>
+          (ev: dom.raw.Event) =>
             Lookup(
               ev.target.asInstanceOf[dom.raw.HTMLInputElement].value.toInt))
       )
@@ -157,19 +163,21 @@ object Debugger extends App {
 
   override def update(msg: Msg, model: Model): (Model, Cmd[Msg]) = {
     msg match {
-      case Play  => ( model.copy(paused = false, indexState = model.states.length), Cmd.Empty)
-      case Pause => ( model.copy(paused = true, indexState = model.states.length), Cmd.Empty)
+      case Play =>
+        (model.copy(paused = false, indexState = model.states.length),
+         Cmd.Empty)
+      case Pause =>
+        (model.copy(paused = true, indexState = model.states.length), Cmd.Empty)
       case Wrapper(m) =>
         println(m)
         val (nw, c) = Mario.update(m, model.states.last._2)
-        ( model.copy(states = model.states :+ (m,nw)), c.map(Wrapper))
+        (model.copy(states = model.states :+ (m, nw)), c.map(Wrapper))
       case Lookup(index) =>
-        val (_msg, _model) = model.states(if(index-1 > 0 ) index-1 else 0)
+        val (_msg, _model) = model.states(if (index - 1 > 0) index - 1 else 0)
         val (_, cmd) = Mario.update(_msg, _model)
         (model.copy(indexState = index), cmd.map(Wrapper))
     }
   }
-
 
   override def subscriptions(model: Model): Sub[Msg] = {
     model match {
